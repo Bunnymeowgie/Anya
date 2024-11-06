@@ -4,6 +4,9 @@ import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters
+from flask import Flask, request
+from telegram import Bot, Update
+from telegram.ext import Dispatcher
 
 # Enable logging
 logging.basicConfig(
@@ -146,6 +149,15 @@ def schedule_message_deletion(context, user_id):
     scheduler.add_job(delete_chat, 'interval', seconds=3600)
     scheduler.start()
 
+# Flask app to handle webhooks
+app = Flask(__name__)
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    update = Update.de_json(request.get_json(), bot)
+    dispatcher.process_update(update)
+    return 'OK'
+
 # Main function to run the bot
 def main():
     application = ApplicationBuilder().token("8014981050:AAFFPBSf9R3KEQf8fwFF4I0SWidxaxwodFI").build()  # Replace with your bot token
@@ -159,6 +171,13 @@ def main():
     application.add_handler(CallbackQueryHandler(class_selection, pattern='^class_'))
 
     logger.info("Starting bot...")
+
+    # Start Flask app in a separate thread
+    from threading import Thread
+    thread = Thread(target=app.run, kwargs={'host': '0.0.0.0', 'port': 5000})
+    thread.start()
+
+    # Start bot polling
     application.run_polling()
 
 if __name__ == '__main__':
