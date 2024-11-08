@@ -1,4 +1,4 @@
 python-telegram-bot
 apscheduler
-flask
+Flask==2.2.3
 Dispatcher
