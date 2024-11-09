@@ -2,11 +2,9 @@ import os
 import json
 import logging
 from apscheduler.schedulers.background import BackgroundScheduler
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Bot
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 from flask import Flask, request
-from telegram import Bot, Update
-from telegram.ext import Dispatcher
 
 # Enable logging
 logging.basicConfig(
@@ -14,6 +12,12 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+# Bot token
+BOT_TOKEN = "8014981050:AAFFPBSf9R3KEQf8fwFF4I0SWidxaxwodFI"  # Replace with your bot token
+
+# Initialize bot instance
+bot = Bot(token=BOT_TOKEN)
 
 # Folder path for the Math PDFs
 PDF_FOLDER_PATH = 'Math'
@@ -155,18 +159,18 @@ app = Flask(__name__)
 @app.route('/webhook', methods=['POST'])
 def webhook():
     update = Update.de_json(request.get_json(), bot)
-    dispatcher.process_update(update)
+    application.update_queue.put(update)  # Use update_queue to process updates
     return 'OK'
 
 # Main function to run the bot
 def main():
-    application = ApplicationBuilder().token("8014981050:AAFFPBSf9R3KEQf8fwFF4I0SWidxaxwodFI").build()  # Replace with your bot token
+    application = ApplicationBuilder().token(BOT_TOKEN).build()
 
     # Handlers
-    application.add_handler(CommandHandler('start', start))  # Start command for testing
+    application.add_handler(CommandHandler('start', start))
     application.add_handler(CommandHandler('get', get_pdf))
-    application.add_handler(CommandHandler('select_class', select_class))  # Manually select class in group
-    application.add_handler(CommandHandler('check_chat_id', check_chat_id))  # Check chat ID
+    application.add_handler(CommandHandler('select_class', select_class))
+    application.add_handler(CommandHandler('check_chat_id', check_chat_id))
     application.add_handler(MessageHandler(filters.ChatType.GROUPS & filters.StatusUpdate.NEW_CHAT_MEMBERS, new_member))
     application.add_handler(CallbackQueryHandler(class_selection, pattern='^class_'))
 
